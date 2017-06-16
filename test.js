@@ -87,6 +87,7 @@ tape(`Handle error in truncated zlib.createGunzip() stream`, function (t) {
   const stream = require('stream')
 
   const gzip = zlib.createGunzip()
+  // listen for expected events
   gzip.on('error', function (err) {
     t.same(err.message, 'unexpected end of file', 'expected error')
     t.end()
@@ -95,13 +96,17 @@ tape(`Handle error in truncated zlib.createGunzip() stream`, function (t) {
     t.end(new Error('Should not reach the end...'))
   })
 
+  // setup the pipe
   const readStream = new stream.PassThrough()
   readStream.pipe(gzip)
 
+  // gzip the input
   zlib.gzip(input, function (err, gzBuf) {
     if (err) { return t.end(err) }
 
+    // corrupt by truncating buffer
     const gzBufTruncated = gzBuf.slice(0, gzBuf.length / 2)
+    // send it to the pipe!
     readStream.end(gzBufTruncated)
   })
 })
@@ -113,6 +118,7 @@ tape(`Handle error in truncated gunzip-maybe stream`, function (t) {
   const stream = require('stream')
 
   const gzip = gunzip()
+  // listen for expected events
   gzip.on('error', function (err) {
     t.same(err.message, 'unexpected end of file', 'expected error')
     t.end()
@@ -121,13 +127,17 @@ tape(`Handle error in truncated gunzip-maybe stream`, function (t) {
     t.end(new Error('Should not reach the end...'))
   })
 
+  // setup the pipe
   const readStream = new stream.PassThrough()
   readStream.pipe(gzip)
 
+  // gzip the input
   zlib.gzip(input, function (err, gzBuf) {
     if (err) { return t.end(err) }
 
+    // corrupt by truncating buffer
     const gzBufTruncated = gzBuf.slice(0, gzBuf.length / 2)
+    // send it to the pipe!
     readStream.end(gzBufTruncated)
   })
 })
