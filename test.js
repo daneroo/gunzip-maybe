@@ -83,7 +83,32 @@ tape('zlib.gunzip a truncated buffer', function (t) {
   })
 })
 
-// Does not work on node:8.1
+tape(`Handle error in truncated zlib.createGunzip() stream`, function (t) {
+  const stream = require('stream')
+
+  const gzip = zlib.createGunzip()
+  gzip.on('error', function (err) {
+    t.same(err.message, 'unexpected end of file', 'expected error')
+    t.end()
+  })
+  gzip.on('end', function () {
+    t.end(new Error('Should not reach the end...'))
+  })
+
+  const readStream = new stream.PassThrough()
+  readStream.pipe(gzip)
+
+  zlib.gzip(input, function (err, gzBuf) {
+    if (err) { return t.end(err) }
+
+    const gzBufTruncated = gzBuf.slice(0, gzBuf.length / 2)
+    readStream.end(gzBufTruncated)
+  })
+})
+
+// - Works with node@v6.9.5
+// - Works with node@v7.10.0
+// - Does not work on node@v8.1.0
 tape(`Handle error in truncated gunzip-maybe stream`, function (t) {
   const stream = require('stream')
 
